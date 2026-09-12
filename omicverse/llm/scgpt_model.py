@@ -1542,35 +1542,6 @@ class ScGPTModel(SCLLMBase):
             SCLLMOutput.status(f"Using pre-trained model with post-hoc correction", 'info')
             return self._apply_post_hoc_integration(adata, batch_key=batch_key, **kwargs)
     
-    def _predict_integration(self, adata: AnnData, batch_key: str = "batch", **kwargs) -> Dict[str, Any]:
-        """Use trained integration model for prediction."""
-        SCLLMOutput.status(f"Using trained integration model", 'info', indent=1)
-        
-        # This would use the actual integration model prediction
-        # Similar to the predict method but for integration task
-        adata_processed = self.preprocess(adata, add_cls_token=True)
-        
-        # Get integrated embeddings from the trained model
-        # Implementation would depend on the trained integration model
-        embeddings = self.get_embeddings(adata_processed, **kwargs)
-        
-        batch_labels = adata.obs[batch_key].astype('category').cat.codes.values
-        
-        results = {
-            'embeddings': embeddings,
-            'batch_labels': batch_labels,
-            'integration_method': 'trained_model',
-            'integration_stats': {
-                'num_batches': len(np.unique(batch_labels)),
-                'batch_distribution': np.bincount(batch_labels).tolist(),
-                'total_cells': len(batch_labels),
-                'method': 'fine_tuned_integration'
-            }
-        }
-        
-        SCLLMOutput.status(f"Integration completed using fine-tuned model", 'loaded')
-        return results
-    
     def _apply_post_hoc_integration(self, adata: AnnData, batch_key: str = "batch", **kwargs) -> Dict[str, Any]:
         """Apply post-hoc batch correction methods to pre-trained embeddings."""
         
