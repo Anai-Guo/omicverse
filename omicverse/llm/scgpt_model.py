@@ -1149,6 +1149,12 @@ class ScGPTModel(SCLLMBase):
         if not self.is_loaded:
             raise ValueError("Model not loaded. Call load_model() first.")
         
+        if task == "integration":
+            if adata.n_obs == 0:
+                raise ValueError("Integration requires at least one cell")
+            if self.model.cell_emb_style != "cls":
+                raise ValueError("Integration requires cell_emb_style='cls'")
+
         # Preprocess data
         adata_processed = self.preprocess(adata, **kwargs)
         
@@ -1496,6 +1502,12 @@ class ScGPTModel(SCLLMBase):
             batch_key: Column name for batch labels
             **kwargs: Additional parameters including:
                 - correction_method: Post-hoc correction method ('combat', 'mnn', 'center_scale', 'none')
+                - include_zero_gene: For fine-tuned integration, include
+                  zero-expression genes (default True, matching scGPT evaluation).
+                  The current fine-tuning helpers use
+                  nonzero genes; pass False to use that gene inclusion policy.
+                  Sequences exceeding config.max_seq_len randomly sample genes
+                  while retaining CLS, so repeated calls may differ.
                 - Other integration parameters
             
         Returns:

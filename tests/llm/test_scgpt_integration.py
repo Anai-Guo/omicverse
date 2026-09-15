@@ -10,7 +10,6 @@ if importlib.util.find_spec("datasets") is None:
     pytest.skip("scGPT requires datasets", allow_module_level=True)
 
 pytest.importorskip("torch")
-pytest.importorskip("einops")
 import torch
 from anndata import AnnData
 from scipy.sparse import csr_matrix
@@ -125,3 +124,23 @@ def test_raw_subset_retains_categories_after_filtering(model, data):
     subset.obs["batch"] = subset.obs["batch"].cat.set_categories(data.obs.batch.cat.categories)
     result = model.integrate(subset, filter_gene_by_counts=1)
     np.testing.assert_array_equal(result["batch_labels"], [1, 1, 1])
+
+
+@pytest.mark.parametrize("entry", ["integrate", "predict"])
+@pytest.mark.parametrize("binned", [False, True])
+def test_empty_integration_input(model, data, entry, binned):
+    if binned:
+        data.layers["X_binned"] = data.X.copy()
+    empty = data[:0].copy()
+    kwargs = {"task": "integration"} if entry == "predict" else {}
+    with pytest.raises(ValueError, match="at least one cell"):
+        getattr(model, entry)(empty, **kwargs)
+
+
+@pytest.mark.parametrize("entry", ["integrate", "predict"])
+@pytest.mark.parametrize("style", ["avg-pool", "w-pool"])
+def test_integration_requires_cls(model, data, entry, style):
+    model.model.cell_emb_style = style
+    kwargs = {"task": "integration"} if entry == "predict" else {}
+    with pytest.raises(ValueError, match="cell_emb_style='cls'"):
+        getattr(model, entry)(data, **kwargs)
